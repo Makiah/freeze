@@ -61,7 +61,7 @@ int main()
 	unsigned int someNumber = 5;
 
 	// Example freezing
-	IceBlock block = IceBlock("frozen.txt");
+	IceBlock block = IceBlock::fromFile("frozen.txt");
 	block.freeze(someVector);
 	block.freeze(someString);
 	block.freeze(someBoolean);
@@ -71,7 +71,7 @@ int main()
 	// Presumably some time passes
 	
 	// Example melting (must occur in same order)
-	IceBlock block2 = IceBlock("frozen.txt");
+	IceBlock block2 = IceBlock::fromFile("frozen.txt");
 	block2.melt(someVector);
 	block2.melt(someString);
 	block2.melt(someBoolean);

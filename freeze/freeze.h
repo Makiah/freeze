@@ -1,12 +1,24 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include <fstream>
 #include <functional>
 #include <cassert>
 
 namespace freeze
 {
+	constexpr char blockStart = '(';
+	constexpr char blockEnd = ')';
+	constexpr char arrayStart = '[';
+	constexpr char arrayEnd = ']';
+	constexpr char stringIndicator = '"';
+	constexpr char intStart = 'i';
+	constexpr char doubleStart = 'd';
+
+	void escapeReservedChars(std::string& s, const std::vector<char>& reservedCharacters);
+	void unescapeReservedChars(std::string& s, const std::vector<char>& reservedCharacters);
+
 	class IceBlock;
 
 	class Puddle
@@ -22,76 +34,30 @@ namespace freeze
 	class IceBlock
 	{
 	private:
-		std::ofstream outFile;
-
 		std::string frozenData;
 
+		size_t iterateUntilContextFree(size_t i, bool inString, int arrayDepth, int blockDepth);
+
 	public:
-		IceBlock(std::string path)
-		{
-			std::ifstream inFile(path);
-			if (inFile.good())
-			{
-				// Load from file
-				inFile >> frozenData; // a single line so this is the extent of the data
-				inFile.close();
-			}
+		static IceBlock fromFile(const std::string& path);
 
-			// Create file
-			outFile.open(path);
-		}
+		IceBlock(std::string frozenData);
 
-		/*
-		(...) = IceBlock
-		[...] = iterable
-		i... = int
-		d... = double
-		"..." = string
-		, = general delimeter
-		*/
+		bool empty();
 
-		void handleDelim()
-		{
-			if (frozenData.size() > 0)
-				frozenData.append(",");
-		}
+		void melt(int& into);
+		void freeze(int data);
 
-		void melt(unsigned int& into)
-		{
-		}
+		void melt(double& into);
+		void freeze(double data);
 
-		void freeze(unsigned int& data)
-		{
-			handleDelim();
-		}
+		void melt(std::string& into);
+		void freeze(std::string& into);
 
+		void melt(Puddle* into);
+		void freeze(Puddle* from);
 
-		void melt(std::string& into)
-		{
-
-		}
-
-		void freeze(std::string& into)
-		{
-			handleDelim();
-		}
-
-
-		void melt(Puddle* into)
-		{
-			assert(frozenData[0] == '(' && frozenData[frozenData.size() - 1] == ')');
-
-			into->melt(*this);
-		}
-
-		void freeze(Puddle* from)
-		{
-			handleDelim();
-			frozenData.append("(");
-			from->freeze(*this);
-			frozenData.append(")");
-		}
-
-
+		void melt(std::vector<int>& into);
+		void freeze(std::vector<int> from);
 	};
 }
