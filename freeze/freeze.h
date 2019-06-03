@@ -3,6 +3,7 @@
 #include <string>
 #include <fstream>
 #include <functional>
+#include <cassert>
 
 namespace freeze
 {
@@ -46,23 +47,51 @@ namespace freeze
 		i... = int
 		d... = double
 		"..." = string
+		, = general delimeter
 		*/
 
-		template<typename T> void melt(T& into)
+		void handleDelim()
 		{
-			if (std::is_same<T, int>::value)
-			{
-
-			}
-			else if (std::is_base_of<Puddle, T>::value)
-			{
-				into.melt(*this);
-			}
+			if (frozenData.size() > 0)
+				frozenData.append(",");
 		}
 
-		template<typename T> void freeze(T& data)
+		void melt(unsigned int& into)
+		{
+		}
+
+		void freeze(unsigned int& data)
+		{
+			handleDelim();
+		}
+
+
+		void melt(std::string& into)
 		{
 
 		}
+
+		void freeze(std::string& into)
+		{
+			handleDelim();
+		}
+
+
+		void melt(Puddle* into)
+		{
+			assert(frozenData[0] == '(' && frozenData[frozenData.size() - 1] == ')');
+
+			into->melt(*this);
+		}
+
+		void freeze(Puddle* from)
+		{
+			handleDelim();
+			frozenData.append("(");
+			from->freeze(*this);
+			frozenData.append(")");
+		}
+
+
 	};
 }

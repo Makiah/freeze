@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <vector>
-#include "IceBlock.h"
+#include "freeze.h"
 
 using namespace freeze;
 
@@ -19,13 +19,13 @@ public:
 	// Remove data from IceBlock and pass on to additional steps (if there are any)
 	void melt(IceBlock& i) override
 	{
-		i.melt<std::string>(someData);
+		i.melt(someData);
 	}
 
 	// Add data to IceBlock
 	void freeze(IceBlock& i) override
 	{
-		i.freeze<std::string>(someData);
+		i.freeze(someData);
 	}
 };
 
@@ -40,13 +40,13 @@ public:
 	// Remove data from IceBlock and pass on to additional steps (if there are any)
 	void melt(IceBlock& i) override
 	{
-		i.melt<std::vector<DoublyDerivedClass>>(elements);
+		i.melt(elements);
 	}
 
 	// Add data to IceBlock
 	void freeze(IceBlock& i) override
 	{
-		i.freeze<std::vector<DoublyDerivedClass>>(elements);
+		i.freeze(elements);
 	}
 };
 
@@ -58,20 +58,23 @@ int main()
 	std::string someString = "Hi, I'm an IceBlock";
 	bool someBoolean = false;
 	DerivedClass someClass = DerivedClass();
+	unsigned int someNumber = 5;
 
 	// Example freezing
 	IceBlock block = IceBlock("frozen.txt");
-	block.freeze<std::vector<unsigned int>>(someVector);
-	block.freeze<std::string>(someString);
-	block.freeze<bool>(someBoolean);
-	block.freeze<DerivedClass>(someClass);
+	block.freeze(someVector);
+	block.freeze(someString);
+	block.freeze(someBoolean);
+	block.freeze(&someClass);
+	block.freeze(someNumber);
 
 	// Presumably some time passes
 	
 	// Example melting (must occur in same order)
 	IceBlock block2 = IceBlock("frozen.txt");
-	block2.melt<std::vector<unsigned int>>(someVector);
-	block2.melt<std::string>(someString);
-	block2.melt<bool>(someBoolean);
-	block2.melt<DerivedClass>(someClass);
+	block2.melt(someVector);
+	block2.melt(someString);
+	block2.melt(someBoolean);
+	block2.melt(&someClass);
+	block2.melt(someNumber);
 }
