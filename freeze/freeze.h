@@ -65,6 +65,7 @@ namespace freeze
 		static IceBlock fromFile(const std::string& path);
 
 		IceBlock(std::string frozenData);
+		IceBlock();
 
 		bool empty();
 
@@ -97,10 +98,32 @@ namespace freeze
 		void freeze(const std::vector<double>& data);
 
 		void melt(std::vector<std::string>& into);
-		void freeze(const std::vector<std::string>& into);
+		void freeze(const std::vector<std::string>& from);
 
-		void melt(std::vector<Puddle*>& into);
-		void freeze(const std::vector<Puddle*>& from);
+		template<typename T> void meltPuddles(std::vector<T>& into)
+		{
+			assert(frozenData[0] == arrayStart);
+			IceBlock arrayBlock = IceBlock(thawNewData());
+
+			unsigned int index = 0;
+			while (!arrayBlock.empty())
+			{
+				Puddle* item = &into[index];
+				melt(item);
+				index++;
+			}
+		}
+
+		template<typename T> void freezePuddles(const std::vector<T>& from)
+		{
+			frozenData += arrayStart;
+			for (const T& item : from)
+			{
+				const Puddle* p = &item; // have to use implicit conversion
+				freeze(p);
+			}
+			frozenData += arrayEnd;
+		}
 
 
 		void save(const std::string& path);

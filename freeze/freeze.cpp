@@ -47,6 +47,9 @@ freeze::IceBlock freeze::IceBlock::fromFile(const std::string& path)
 freeze::IceBlock::IceBlock(std::string frozenData) : frozenData(frozenData)
 {}
 
+freeze::IceBlock::IceBlock()
+{}
+
 bool freeze::IceBlock::empty()
 {
 	return frozenData.empty();
@@ -113,7 +116,7 @@ std::string freeze::IceBlock::thawNewData()
 
 	std::string chunked = frozenData.substr(1, i - 1); // remove indicators
 
-	frozenData.erase(0, i);
+	frozenData.erase(0, i + 1);
 	
 	return chunked;
 }
@@ -173,21 +176,11 @@ void freeze::IceBlock::melt(Puddle* into)
 void freeze::IceBlock::freeze(const Puddle* from)
 {
 	frozenData += blockStart;
-	IceBlock dummy = IceBlock("");
+	IceBlock dummy = IceBlock();
 	from->freeze(dummy);
 	frozenData += dummy.frozenData;
 	frozenData += blockEnd;
 }
-
-void freeze::IceBlock::save(const std::string& path)
-{
-	std::ofstream outStream(path, std::ofstream::trunc | std::ofstream::out);
-	assert(outStream);
-	outStream << frozenData;
-	outStream.close();
-}
-
-
 
 
 void freeze::IceBlock::melt(std::vector<int>& into)
@@ -223,12 +216,10 @@ void freeze::IceBlock::freeze(const std::vector<std::string>& into)
 }
 
 
-void freeze::IceBlock::melt(std::vector<Puddle*>& into)
+void freeze::IceBlock::save(const std::string& path)
 {
-	meltVector<Puddle*>(into);
-}
-
-void freeze::IceBlock::freeze(const std::vector<Puddle*>& from)
-{
-	freezeVector<Puddle*>(from);
+	std::ofstream outStream(path, std::ofstream::trunc | std::ofstream::out);
+	assert(outStream);
+	outStream << frozenData;
+	outStream.close();
 }

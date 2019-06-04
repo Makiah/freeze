@@ -32,7 +32,7 @@ public:
 class DerivedClass : public Puddle
 {
 private: 
-	std::vector<Puddle*> elements; // todo check up on potentially accessing private members
+	std::vector<DoublyDerivedClass> elements;
 
 public:
 	DerivedClass() {}
@@ -40,17 +40,15 @@ public:
 	// Remove data from IceBlock and pass on to additional steps (if there are any)
 	void melt(IceBlock i) override
 	{
-		i.melt(elements);
+		i.meltPuddles<DoublyDerivedClass>(elements);
 	}
 
 	// Add data to IceBlock
 	void freeze(IceBlock& i) const override
 	{
-		i.freeze(elements);
+		i.freezePuddles<DoublyDerivedClass>(elements);
 	}
 };
-
-// I actually HAVE to make a single line save unless I want to somehow overload vectors, because treating vectors as primitives fucks everything up completely since you can have a vector of subclasses
 
 void createIceBlock()
 {
@@ -59,11 +57,12 @@ void createIceBlock()
 	DerivedClass someClass = DerivedClass();
 	int someNumber = 5;
 
-	IceBlock block = IceBlock::fromFile("frozen.txt");
+	IceBlock block;
 	block.freeze(someVector);
 	block.freeze(someString);
 	block.freeze(&someClass);
 	block.freeze(someNumber);
+	block.save("frozen.txt");
 }
 
 void checkIceBlock()
