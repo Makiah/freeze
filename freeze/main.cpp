@@ -29,10 +29,33 @@ public:
 	}
 };
 
+class ClassBDerived : public Puddle
+{
+public: 
+	std::string additionalData;
+
+	ClassBDerived(std::string additionalData) : additionalData(additionalData) {}
+	ClassBDerived() : additionalData("") {}
+
+
+	// Remove data from IceBlock and pass on to additional steps (if there are any)
+	void melt(IceBlock i) override
+	{
+		i.melt(additionalData);
+	}
+
+	// Add data to IceBlock
+	void freeze(IceBlock& i) const override
+	{
+		i.freeze(additionalData);
+	}
+};
+
 class ClassB : public Puddle
 {
 public:
 	std::string someData;
+	std::vector<ClassBDerived> derivedNodes;
 
 	ClassB(std::string someData) : someData(std::move(someData)) {}
 	ClassB() : someData(std::move("")) {}
@@ -41,12 +64,21 @@ public:
 	void melt(IceBlock i) override
 	{
 		i.melt(someData);
+		
+		int nodeSizes;
+		i.melt(nodeSizes);
+		for (unsigned int i = 0; i < nodeSizes; i++)
+			derivedNodes.push_back(ClassBDerived());
+		i.meltPuddles<ClassBDerived>(derivedNodes);
 	}
 
 	// Add data to IceBlock
 	void freeze(IceBlock& i) const override
 	{
 		i.freeze(someData);
+
+		i.freeze((int)(derivedNodes.size()));
+		i.freezePuddles<ClassBDerived>(derivedNodes);
 	}
 };
 
@@ -59,6 +91,7 @@ void createIceBlock()
 	ClassA someClass = ClassA(2);
 	int someNumber = 5;
 	std::vector<ClassB> someClassVector = { ClassB("1"), ClassB("2"), ClassB("3") };
+	someClassVector[0].derivedNodes.push_back(ClassBDerived("4"));
 
 	IceBlock block;
 	block.freeze(someVector);
@@ -98,6 +131,7 @@ void checkIceBlock()
 
 	block.meltPuddles<ClassB>(someClassVector);
 	assert(someClassVector[0].someData == "1" && someClassVector[1].someData == "2" && someClassVector[2].someData == "3");
+	assert(someClassVector[0].derivedNodes[0].additionalData == "4");
 
 	std::cout << "All good!" << std::endl;
 }
