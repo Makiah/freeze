@@ -7,78 +7,67 @@
 
 using namespace freeze;
 
-class ClassA : public Puddle
+class ClassA
 {
 public:
 	int id;
 
 	ClassA(int id) : id(id) {}
 
-	ClassA() : id(0) {}
-
-	// Remove data from IceBlock and pass on to additional steps (if there are any)
-	void melt(IceBlock i) override
+	ClassA(IceBlock i)
 	{
-		i.melt(id);
+		id = i.melt<int>();
 	}
 
 	// Add data to IceBlock
-	void freeze(IceBlock& i) const override
+	IceBlock freeze() const
 	{
+		IceBlock i;
 		i.freeze(id);
+		return i;
 	}
 };
 
-class ClassBDerived : public Puddle
+class ClassBDerived
 {
 public: 
 	std::string additionalData;
 
 	ClassBDerived(std::string additionalData) : additionalData(additionalData) {}
-	ClassBDerived() : additionalData("") {}
-
-
-	// Remove data from IceBlock and pass on to additional steps (if there are any)
-	void melt(IceBlock i) override
+	ClassBDerived(IceBlock i)
 	{
-		i.melt(additionalData);
+		additionalData = i.melt<std::string>();
 	}
 
 	// Add data to IceBlock
-	void freeze(IceBlock& i) const override
+	IceBlock freeze() const
 	{
-		i.freeze(additionalData);
+		IceBlock i;
+		i.freeze<std::string>(additionalData);
+		return i;
 	}
 };
 
-class ClassB : public Puddle
+class ClassB
 {
 public:
 	std::string someData;
 	std::vector<ClassBDerived> derivedNodes;
 
 	ClassB(std::string someData) : someData(std::move(someData)) {}
-	ClassB() : someData(std::move("")) {}
-
-	// Remove data from IceBlock and pass on to additional steps (if there are any)
-	void melt(IceBlock i) override
+	ClassB(IceBlock i)
 	{
-		i.melt(someData);
-		
-		int nodeSizes;
-		i.melt(nodeSizes);
-		for (unsigned int i = 0; i < nodeSizes; i++)
-			derivedNodes.push_back(ClassBDerived());
-		i.meltPuddles<ClassBDerived>(derivedNodes);
+		someData = i.melt<std::string>();
+		derivedNodes = i.meltVector<ClassBDerived>();
 	}
 
 	// Add data to IceBlock
-	void freeze(IceBlock& i) const override
+	IceBlock freeze() const 
 	{
-		i.freeze(someData);
-
-		i.freeze((int)(derivedNodes.size()));
-		i.freezePuddles<ClassBDerived>(derivedNodes);
+		IceBlock i;
+		i.freeze<std::string>(someData);
+		i.freezeVector<ClassBDerived>(derivedNodes);
+		return i;
 	}
 };
 
@@ -92,13 +81,15 @@ void createIceBlock()
 	int someNumber = 5;
 	std::vector<ClassB> someClassVector = { ClassB("1"), ClassB("2"), ClassB("3") };
 	someClassVector[0].derivedNodes.push_back(ClassBDerived("4"));
+	bool someBool = false;
 
 	IceBlock block;
-	block.freeze(someVector);
-	block.freeze(someString);
-	block.freeze(&someClass);
-	block.freeze(someNumber);
-	block.freezePuddles<ClassB>(someClassVector);
+	block.freezeVector<int>(someVector);
+	block.freeze<std::string>(someString);
+	block.freeze<ClassA>(someClass);
+	block.freeze<int>(someNumber);
+	block.freezeVector<ClassB>(someClassVector);
+	block.freeze<bool>(someBool);
 
 	block.save("frozen.txt");
 }
@@ -109,27 +100,19 @@ void checkIceBlock()
 
 	std::cout << "Testing block..." << std::endl;
 
-	std::vector<int> someVector = { 0, 0, 0, 0, 0 };
-	std::string someString = "";
-	ClassA someClass = ClassA();
-	int someNumber = 0;
-	std::vector<ClassB> someClassVector = { ClassB(), ClassB(), ClassB() };
-
 	IceBlock block = IceBlock::fromFile("frozen.txt");
+
+	std::vector<int> someVector = block.meltVector<int>();
+	std::string someString = block.melt<std::string>();
+	ClassA someClass = block.melt<ClassA>();
+	int someNumber = block.melt<int>();
+	std::vector<ClassB> someClassVector = block.meltVector<ClassB>();
+	bool someBool = block.melt<bool>();
 	
-	block.melt(someVector);
 	assert(someVector[0] == 1 && someVector[1] == 2 && someVector[2] == 3 && someVector[3] == 4 && someVector[4] == 5);
-	
-	block.melt(someString);
 	assert(someString == "Hi, I'm an IceBlock");
-
-	block.melt(&someClass);
 	assert(someClass.id == 2);
-
-	block.melt(someNumber);
 	assert(someNumber == 5);
-
-	block.meltPuddles<ClassB>(someClassVector);
 	assert(someClassVector[0].someData == "1" && someClassVector[1].someData == "2" && someClassVector[2].someData == "3");
 	assert(someClassVector[0].derivedNodes[0].additionalData == "4");
 
