@@ -26,7 +26,7 @@ freeze::IceBlock i = freeze::IceBlock::fromFile("resources/ice.txt");
 int someNum = i.melt<int>();
 std::string someString = i.melt<std::string>();
 bool someBool = i.melt<bool>();
-std::vector<std::vector<ClassA>> twod = i.melt<std::vector<std::vector<ClassA>>();
+std::vector<std::vector<ClassA>> twod = i.melt<std::vector<std::vector<ClassA>>>();
 
 // proceed with data from last run
 ```
