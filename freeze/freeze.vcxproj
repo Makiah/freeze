@@ -151,10 +151,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="freeze.cpp" />
+    <ClInclude Include="freeze.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="IceBlock.h" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="freeze.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

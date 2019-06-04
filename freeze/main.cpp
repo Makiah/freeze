@@ -17,13 +17,13 @@ public:
 	{}
 
 	// Remove data from IceBlock and pass on to additional steps (if there are any)
-	void melt(IceBlock& i) override
+	void melt(IceBlock i) override
 	{
 		i.melt(someData);
 	}
 
 	// Add data to IceBlock
-	void freeze(IceBlock& i) override
+	void freeze(IceBlock& i) const override
 	{
 		i.freeze(someData);
 	}
@@ -32,19 +32,19 @@ public:
 class DerivedClass : public Puddle
 {
 private: 
-	std::vector<DoublyDerivedClass> elements;
+	std::vector<Puddle*> elements; // todo check up on potentially accessing private members
 
 public:
 	DerivedClass() {}
 
 	// Remove data from IceBlock and pass on to additional steps (if there are any)
-	void melt(IceBlock& i) override
+	void melt(IceBlock i) override
 	{
 		i.melt(elements);
 	}
 
 	// Add data to IceBlock
-	void freeze(IceBlock& i) override
+	void freeze(IceBlock& i) const override
 	{
 		i.freeze(elements);
 	}
@@ -52,29 +52,36 @@ public:
 
 // I actually HAVE to make a single line save unless I want to somehow overload vectors, because treating vectors as primitives fucks everything up completely since you can have a vector of subclasses
 
-int main()
+void createIceBlock()
 {
-	std::vector<unsigned int> someVector = { 1, 2, 3, 4, 5 };
+	std::vector<int> someVector = { 1, 2, 3, 4, 5 };
 	std::string someString = "Hi, I'm an IceBlock";
-	bool someBoolean = false;
 	DerivedClass someClass = DerivedClass();
-	unsigned int someNumber = 5;
+	int someNumber = 5;
 
-	// Example freezing
 	IceBlock block = IceBlock::fromFile("frozen.txt");
 	block.freeze(someVector);
 	block.freeze(someString);
-	block.freeze(someBoolean);
 	block.freeze(&someClass);
 	block.freeze(someNumber);
+}
 
-	// Presumably some time passes
-	
-	// Example melting (must occur in same order)
-	IceBlock block2 = IceBlock::fromFile("frozen.txt");
-	block2.melt(someVector);
-	block2.melt(someString);
-	block2.melt(someBoolean);
-	block2.melt(&someClass);
-	block2.melt(someNumber);
+void checkIceBlock()
+{
+	std::vector<int> someVector = { 0, 0, 0, 0, 0 };
+	std::string someString = "";
+	DerivedClass someClass = DerivedClass();
+	int someNumber = 0;
+
+	IceBlock block = IceBlock::fromFile("frozen.txt");
+	block.melt(someVector);
+	block.melt(someString);
+	block.melt(&someClass);
+	block.melt(someNumber);
+}
+
+int main()
+{
+	createIceBlock();
+	checkIceBlock();
 }

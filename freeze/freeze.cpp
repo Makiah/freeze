@@ -47,150 +47,130 @@ freeze::IceBlock freeze::IceBlock::fromFile(const std::string& path)
 freeze::IceBlock::IceBlock(std::string frozenData) : frozenData(frozenData)
 {}
 
-freeze::IceBlock::empty()
+bool freeze::IceBlock::empty()
 {
 	return frozenData.empty();
 }
 
-void freeze::IceBlock::melt(int& into)
+std::string freeze::IceBlock::thawNewData()
 {
-	assert(frozenData[0] == intStart);
+	bool inPrimitive = false;
+	bool inString = false; 
+	int arrayDepth = 0; 
+	int blockDepth = 0;
 
-	size_t i = 2;
-	while (true)
+	// Set entry parameters based on first char
+	size_t i = 0;
+	while (i == 0 || (inPrimitive || inString || arrayDepth > 0 || blockDepth > 0))
 	{
 		assert(i < frozenData.size());
+		assert(blockDepth >= 0 && arrayDepth >= 0);
 
-		for (char c : {stringIndicator, intStart, doubleStart, arrayStart, blockStart})
-			if (frozenData[i] == c)
-				break;
+		char c = frozenData[i];
+
+		if (inString)
+		{
+			if (c == stringIndicator)
+				inString = false;
+		}
+		else if (inPrimitive)
+		{
+			if (c == doubleIndicator || c == intIndicator || c == boolIndicator)
+			{
+				inPrimitive = false;
+			}
+		}
+		else 
+		{
+			if (c == blockStart)
+			{
+				blockDepth++;
+			}
+			else if (c == arrayStart)
+			{
+				arrayDepth++;
+			}
+			else if (c == blockEnd)
+			{
+				blockDepth--;
+			}
+			else if (c == arrayEnd)
+			{
+				arrayDepth--;
+			}
+			else if (c == stringIndicator && (i == 0 || frozenData[i - 1] == '\\'))
+			{
+				inString = true;
+			}
+			else if (c == doubleIndicator || c == intIndicator || c == boolIndicator)
+			{
+				inPrimitive = true;
+			}
+		}
 
 		i++;
 	}
 
-	into = atoi(frozenData.substr(1, i - 1).c_str());
+	std::string chunked = frozenData.substr(1, i - 1); // remove indicators
 
 	frozenData.erase(0, i);
+	
+	return chunked;
+}
+
+
+void freeze::IceBlock::melt(int& into)
+{
+	assert(frozenData[0] == intIndicator);
+	into = atoi(thawNewData().c_str());
 }
 
 void freeze::IceBlock::freeze(int data)
 {
-	frozenData += intStart;
+	frozenData += intIndicator;
 	frozenData += std::to_string(data);
+	frozenData += intIndicator;
 }
 
 
 void freeze::IceBlock::melt(double& into)
 {
-	assert(frozenData[0] == doubleStart);
-
-	size_t i = 2;
-	while (true)
-	{
-		assert(i < frozenData.size());
-
-		for (char c : {stringIndicator, intStart, doubleStart, arrayStart, blockStart})
-			if (frozenData[i] == c)
-				break;
-
-		i++;
-	}
-
-	into = atof(frozenData.substr(1, i - 1).c_str());
-
-	frozenData.erase(0, i);
+	assert(frozenData[0] == intIndicator);
+	into = atof(thawNewData().c_str());
 }
 
 void freeze::IceBlock::freeze(double data)
 {
-	frozenData += doubleStart;
+	frozenData += doubleIndicator;
 	frozenData += std::to_string(data);
+	frozenData += doubleIndicator;
 }
 
 
 void freeze::IceBlock::melt(std::string& into)
 {
 	assert(frozenData[0] == stringIndicator);
-
-	size_t i = 1;
-	while (true)
-	{
-		assert(i < frozenData.size());
-		if (frozenData[i] == stringIndicator && frozenData[i - 1] != '\\')
-			break;
-		i++;
-	}
-
-	into.assign(frozenData.substr(1, i - 1));
+	into.assign(thawNewData());
 	unescapeReservedChars(into, { stringIndicator });
-
-	frozenData.erase(0, i + 1);
 }
 
-void freeze::IceBlock::freeze(std::string& into)
+void freeze::IceBlock::freeze(const std::string& into)
 {
 	frozenData += stringIndicator;
-	escapeReservedChars(into, { stringIndicator });
-	frozenData += into;
+	std::string dup = into;
+	escapeReservedChars(dup, { stringIndicator });
+	frozenData += dup;
 	frozenData += stringIndicator;
-}
-
-size_t freeze::IceBlock::iterateUntilContextFree(size_t i, bool inString, int arrayDepth, int blockDepth)
-{
-	while (inString || arrayDepth > 0 || blockDepth > 0)
-	{
-		assert(i < frozenData.size());
-		assert(blockDepth >= 0 && arrayDepth >= 0);
-
-		if (!inString)
-		{
-			if (frozenData[i] == blockStart)
-			{
-				blockDepth++;
-			}
-			else if (frozenData[i] == arrayStart)
-			{
-				arrayDepth++;
-			}
-			else if (frozenData[i] == blockEnd)
-			{
-				blockDepth--;
-			}
-			else if (frozenData[i] == arrayEnd)
-			{
-				arrayDepth--;
-			}
-			else if (frozenData[i] == stringIndicator)
-			{
-				inString = true;
-			}
-		}
-		else
-		{
-			if (frozenData[i] == stringIndicator)
-				inString = false;
-		}
-
-		i++;
-	}
-
-	return i;
 }
 
 
 void freeze::IceBlock::melt(Puddle* into)
 {
 	assert(frozenData[0] == blockStart);
-
-	size_t i = iterateUntilContextFree(1, false, 0, 1);
-
-	IceBlock block = IceBlock(frozenData.substr(1, i - 1));
-	into->melt(block);
-
-	frozenData.erase(0, i + 1);
+	into->melt(IceBlock(thawNewData()));
 }
 
-void freeze::IceBlock::freeze(Puddle* from)
+void freeze::IceBlock::freeze(const Puddle* from)
 {
 	frozenData += blockStart;
 	IceBlock dummy = IceBlock("");
@@ -198,30 +178,57 @@ void freeze::IceBlock::freeze(Puddle* from)
 	frozenData += dummy.frozenData;
 	frozenData += blockEnd;
 }
+
+void freeze::IceBlock::save(const std::string& path)
+{
+	std::ofstream outStream(path, std::ofstream::trunc | std::ofstream::out);
+	assert(outStream);
+	outStream << frozenData;
+	outStream.close();
+}
+
+
 
 
 void freeze::IceBlock::melt(std::vector<int>& into)
 {
-	assert(frozenData[0] == blockStart);
-
-	size_t i = iterateUntilContextFree(1, false, 1, 0);
-
-	unsigned int index = 0;
-	IceBlock block = IceBlock(frozenData.substr(1, i - 1));
-	while (!block.empty())
-	{
-		melt(into[index]);
-		index++;
-	}
-
-	frozenData.erase(0, i + 1);
+	meltVector<int>(into);
 }
 
-void freeze::IceBlock::freeze(std::vector<int> from)
+void freeze::IceBlock::freeze(const std::vector<int> data)
 {
-	frozenData += blockStart;
-	IceBlock dummy = IceBlock("");
-	from->freeze(dummy);
-	frozenData += dummy.frozenData;
-	frozenData += blockEnd;
+	freezeVector<int>(data);
+}
+
+
+void freeze::IceBlock::melt(std::vector<double>& into)
+{
+	meltVector<double>(into);
+}
+
+void freeze::IceBlock::freeze(const std::vector<double>& data)
+{
+	freezeVector<double>(data);
+}
+
+
+void freeze::IceBlock::melt(std::vector<std::string>& into)
+{
+	meltVector<std::string>(into);
+}
+
+void freeze::IceBlock::freeze(const std::vector<std::string>& into)
+{
+	freezeVector<std::string>(into);
+}
+
+
+void freeze::IceBlock::melt(std::vector<Puddle*>& into)
+{
+	meltVector<Puddle*>(into);
+}
+
+void freeze::IceBlock::freeze(const std::vector<Puddle*>& from)
+{
+	freezeVector<Puddle*>(from);
 }

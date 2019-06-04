@@ -13,8 +13,9 @@ namespace freeze
 	constexpr char arrayStart = '[';
 	constexpr char arrayEnd = ']';
 	constexpr char stringIndicator = '"';
-	constexpr char intStart = 'i';
-	constexpr char doubleStart = 'd';
+	constexpr char intIndicator = 'i';
+	constexpr char doubleIndicator = 'd';
+	constexpr char boolIndicator = 'd';
 
 	void escapeReservedChars(std::string& s, const std::vector<char>& reservedCharacters);
 	void unescapeReservedChars(std::string& s, const std::vector<char>& reservedCharacters);
@@ -25,10 +26,10 @@ namespace freeze
 	{
 	public:
 		// Remove data from IceBlock and pass on to additional steps (if there are any)
-		virtual void melt(IceBlock& i) = 0;
+		virtual void melt(IceBlock i) = 0;
 
 		// Add data to IceBlock
-		virtual void freeze(IceBlock& i) = 0;
+		virtual void freeze(IceBlock& i) const = 0;
 	};
 
 	class IceBlock
@@ -36,7 +37,29 @@ namespace freeze
 	private:
 		std::string frozenData;
 
-		size_t iterateUntilContextFree(size_t i, bool inString, int arrayDepth, int blockDepth);
+		std::string thawNewData();
+
+		template <typename T> void meltVector(std::vector<T>& into)
+		{
+			assert(frozenData[0] == arrayStart);
+			IceBlock arrayBlock = IceBlock(thawNewData());
+
+			unsigned int index = 0;
+			while (!arrayBlock.empty())
+			{
+				T& item = into[index];
+				melt(item);
+				index++;
+			}
+		}
+
+		template <typename T> void freezeVector(const std::vector<T>& from)
+		{
+			frozenData += arrayStart;
+			for (T i : from)
+				freeze(i);
+			frozenData += arrayEnd;
+		}
 
 	public:
 		static IceBlock fromFile(const std::string& path);
@@ -45,19 +68,41 @@ namespace freeze
 
 		bool empty();
 
+
+		// Not currently supported because boolean out-parameters aren't supported (bool& test = vector[0];) fails
+		//void melt(bool& into);
+		//void freeze(const bool data);
+
 		void melt(int& into);
-		void freeze(int data);
+		void freeze(const int data);
 
 		void melt(double& into);
-		void freeze(double data);
+		void freeze(const double data);
 
 		void melt(std::string& into);
-		void freeze(std::string& into);
+		void freeze(const std::string& into);
 
 		void melt(Puddle* into);
-		void freeze(Puddle* from);
+		void freeze(const Puddle* from);
+
+
+		// Could simply provide templated argument but this is easier for the end user
+		void melt(std::vector<bool>& into);
+		void freeze(const std::vector<bool>& data);
 
 		void melt(std::vector<int>& into);
-		void freeze(std::vector<int> from);
+		void freeze(const std::vector<int> data);
+
+		void melt(std::vector<double>& into);
+		void freeze(const std::vector<double>& data);
+
+		void melt(std::vector<std::string>& into);
+		void freeze(const std::vector<std::string>& into);
+
+		void melt(std::vector<Puddle*>& into);
+		void freeze(const std::vector<Puddle*>& from);
+
+
+		void save(const std::string& path);
 	};
 }
