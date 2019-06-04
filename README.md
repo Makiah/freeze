@@ -1,17 +1,36 @@
 # freeze
-☃️ Quick and dirty method of concisely loading and saving the properties of arbitrarily complex class structures in a text file, provided loading occurs in a known order.  
+☃️ Quick method of concisely loading and saving the properties of arbitrarily complex class structures in a text file, provided loading occurs in a known order.  
 
 ## Usage 
 
-See `main.cpp`.  
+### Basic
 
-`freeze::IceBlock` holds stored class data. 
-* Load from file via `IceBlock::fromFile(path)`, and save via `block.save(path)`.  
-* Unload from and load data to classes via `melt` and `freeze` respectively. 
-* For iterables of classes, use `meltPuddles<T>` and `freezePuddles<T>`
+```
+// data
+int someNum = 2;
+std::string someString = "string";
+bool someBool = false;
 
-`freeze::Puddle` handles any classes which have reloadable data should extend this
-* To use, overload `melt(IceBlock)` and `freeze(IceBlock&)`.  
+freeze::IceBlock i;
+i.freeze(someNun);
+i.freeze(someString);
+i.freeze(someBool);
+i.save("resources/ice.txt");
+
+// ... process exits, new run (order dependent loading)
+
+freeze::IceBlock i = freeze::IceBlock::fromFile("resources/ice.txt");
+
+int someNum = i.melt<int>();
+std::string someString = i.melt<std::string>();
+bool someBool = i.melt<bool>();
+
+// proceed with data from last run
+```
+
+### Advanced
+
+See `main.cpp`.
 
 ## Building
 

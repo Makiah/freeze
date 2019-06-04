@@ -43,7 +43,7 @@ public:
 	IceBlock freeze() const
 	{
 		IceBlock i;
-		i.freeze<std::string>(additionalData);
+		i.freeze(additionalData);
 		return i;
 	}
 };
@@ -65,8 +65,8 @@ public:
 	IceBlock freeze() const 
 	{
 		IceBlock i;
-		i.freeze<std::string>(someData);
-		i.freezeVector<ClassBDerived>(derivedNodes);
+		i.freeze(someData);
+		i.freezeVector(derivedNodes);
 		return i;
 	}
 };
@@ -84,12 +84,12 @@ void createIceBlock()
 	bool someBool = false;
 
 	IceBlock block;
-	block.freezeVector<int>(someVector);
-	block.freeze<std::string>(someString);
-	block.freeze<ClassA>(someClass);
-	block.freeze<int>(someNumber);
-	block.freezeVector<ClassB>(someClassVector);
-	block.freeze<bool>(someBool);
+	block.freezeVector(someVector);
+	block.freeze(someString);
+	block.freeze(someClass);
+	block.freeze(someNumber);
+	block.freezeVector(someClassVector);
+	block.freeze(someBool);
 
 	block.save("frozen.txt");
 }
