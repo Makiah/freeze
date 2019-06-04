@@ -14,7 +14,7 @@ namespace freeze
 	constexpr char stringIndicator = '"';
 	constexpr char intIndicator = 'i';
 	constexpr char doubleIndicator = 'd';
-	constexpr char boolIndicator = 'd';
+	constexpr char boolIndicator = 'b';
 
 	void escapeReservedChars(std::string& s, const std::vector<char>& reservedCharacters);
 	void unescapeReservedChars(std::string& s, const std::vector<char>& reservedCharacters);
@@ -26,76 +26,38 @@ namespace freeze
 
 		std::string thawNewData();
 
-	public:
-		static IceBlock fromFile(const std::string& path);
-
-		IceBlock(std::string frozenData);
-		IceBlock();
-
-		bool empty();
-
-
-		// Not currently supported because boolean out-parameters aren't supported (bool& test = vector[0];) fails
-		//void melt(bool& into);
-		//void freeze(const bool data);
-
-		template<typename T> T melt()
+		template<typename T> T meltItem()
 		{
 			assert(frozenData[0] == blockStart);
 			return T(IceBlock(thawNewData()));
 		}
 
-		template<typename T> void freeze(const T& item)
-		{
-			frozenData += blockStart;
-			frozenData += item.freeze().frozenData;
-			frozenData += blockEnd;
-		}
-
-		
-		template<> bool melt<bool>()
+		template<> bool meltItem<bool>()
 		{
 			assert(frozenData[0] == boolIndicator);
 			return thawNewData()[0] == 't';
 		}
 
-		template<> void freeze<bool>(const bool& item)
-		{
-			frozenData += boolIndicator;
-			frozenData += (item ? 't' : 'f');
-			frozenData += boolIndicator;
-		}
-
-
-		template<> int melt<int>()
+		template<> int meltItem<int>()
 		{
 			assert(frozenData[0] == intIndicator);
 			return atoi(thawNewData().c_str());
 		}
 
-		template<> void freeze<int>(const int& item)
+		// TODO see if above can be merged since literally same code
+		template<> unsigned int meltItem<unsigned int>()
 		{
-			frozenData += intIndicator;
-			frozenData += std::to_string(item);
-			frozenData += intIndicator;
+			assert(frozenData[0] == intIndicator);
+			return atoi(thawNewData().c_str());
 		}
 
-
-		template<> double melt<double>()
+		template<> double meltItem<double>()
 		{
 			assert(frozenData[0] == doubleIndicator);
 			return atof(thawNewData().c_str());
 		}
 
-		template<> void freeze<double>(const double& item)
-		{
-			frozenData += doubleIndicator;
-			frozenData += std::to_string(item);
-			frozenData += doubleIndicator;
-		}
-
-
-		template<> std::string melt<std::string>()
+		template<> std::string meltItem<std::string>()
 		{
 			assert(frozenData[0] == stringIndicator);
 			std::string data = thawNewData();
@@ -103,17 +65,6 @@ namespace freeze
 			return data;
 		}
 
-		template<> void freeze<std::string>(const std::string& item)
-		{
-			frozenData += stringIndicator;
-			std::string dup = item;
-			escapeReservedChars(dup, { stringIndicator });
-			frozenData += dup;
-			frozenData += stringIndicator;
-		}
-
-
-		// name change might be avoidable by using some sort of subtemplate but off wifi so idk
 		template<typename T> std::vector<T> meltVector()
 		{
 			assert(frozenData[0] == arrayStart);
@@ -125,7 +76,75 @@ namespace freeze
 			return toReturn;
 		}
 
-		template<typename T> void freezeVector(const std::vector<T>& from)
+	public:
+		static IceBlock fromFile(const std::string & path);
+
+		IceBlock(std::string frozenData);
+		IceBlock();
+
+		bool empty();
+
+		// Yeah yeah this feels hella jank but C++ doesn't support partial template specialization so this is the next best thing
+		template<typename T> T melt()
+		{
+			return melt_impl(static_cast<T*>(0));
+		}
+		template<typename T> T melt_impl(T*)
+		{
+			return meltItem<T>();
+		}
+		template<typename T> std::vector<T> melt_impl(std::vector<T>*)
+		{
+			return meltVector<T>();
+		}
+
+		// See above
+		template<typename T> void freeze(const T & item)
+		{
+			frozenData += blockStart;
+			frozenData += item.freeze().frozenData;
+			frozenData += blockEnd;
+		}
+
+		template<> void freeze<std::string>(const std::string & item)
+		{
+			frozenData += stringIndicator;
+			std::string dup = item;
+			escapeReservedChars(dup, { stringIndicator });
+			frozenData += dup;
+			frozenData += stringIndicator;
+		}
+
+		template<> void freeze<double>(const double& item)
+		{
+			frozenData += doubleIndicator;
+			frozenData += std::to_string(item);
+			frozenData += doubleIndicator;
+		}
+
+		template<> void freeze<unsigned int>(const unsigned int& item)
+		{
+			frozenData += intIndicator;
+			frozenData += std::to_string(item);
+			frozenData += intIndicator;
+		}
+
+		template<> void freeze<int>(const int& item)
+		{
+			frozenData += intIndicator;
+			frozenData += std::to_string(item);
+			frozenData += intIndicator;
+		}
+
+		template<> void freeze<bool>(const bool& item)
+		{
+			frozenData += boolIndicator;
+			frozenData += (item ? 't' : 'f');
+			frozenData += boolIndicator;
+		}
+
+		// Works bc overloading
+		template<typename T> void freeze(const std::vector<T> & from)
 		{
 			frozenData += arrayStart;
 			for (const T& item : from)
@@ -134,6 +153,6 @@ namespace freeze
 		}
 
 
-		void save(const std::string& path);
+		void save(const std::string & path);
 	};
 }
