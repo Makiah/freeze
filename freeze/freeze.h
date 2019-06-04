@@ -3,7 +3,6 @@
 #include <string>
 #include <vector>
 #include <fstream>
-#include <functional>
 #include <cassert>
 
 namespace freeze

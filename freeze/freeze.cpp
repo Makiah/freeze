@@ -1,6 +1,5 @@
 #include "freeze.h"
 #include <sstream>
-#include <iostream>
 
 void freeze::escapeReservedChars(std::string& s, const std::vector<char>& reservedCharacters)
 {
