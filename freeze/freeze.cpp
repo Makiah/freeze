@@ -81,7 +81,7 @@ std::string freeze::IceBlock::thawNewData()
 		}
 		else if (inPrimitive)
 		{
-			if (c == doubleIndicator || c == intIndicator || c == boolIndicator)
+			if (c == doubleIndicator || c == intIndicator)
 			{
 				inPrimitive = false;
 			}
@@ -108,7 +108,7 @@ std::string freeze::IceBlock::thawNewData()
 			{
 				inString = true;
 			}
-			else if (c == doubleIndicator || c == intIndicator || c == boolIndicator)
+			else if (c == doubleIndicator || c == intIndicator)
 			{
 				inPrimitive = true;
 			}
