@@ -48,7 +48,7 @@ namespace freeze
 			while (!arrayBlock.empty())
 			{
 				T& item = into[index];
-				melt(item);
+				arrayBlock.melt(item);
 				index++;
 			}
 		}
@@ -109,7 +109,7 @@ namespace freeze
 			while (!arrayBlock.empty())
 			{
 				Puddle* item = &into[index];
-				melt(item);
+				arrayBlock.melt(item);
 				index++;
 			}
 		}

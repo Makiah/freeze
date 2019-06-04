@@ -1,4 +1,6 @@
 #include "freeze.h"
+#include <sstream>
+#include <iostream>
 
 void freeze::escapeReservedChars(std::string& s, const std::vector<char>& reservedCharacters)
 {
@@ -36,8 +38,9 @@ freeze::IceBlock freeze::IceBlock::fromFile(const std::string& path)
 	std::ifstream inFile(path);
 	if (inFile.good())
 	{
-		// Load from file
-		inFile >> frozenData; // a single line so this is the extent of the data
+		std::stringstream buffer;
+		buffer << inFile.rdbuf();
+		frozenData = buffer.str();
 		inFile.close();
 	}
 
@@ -114,9 +117,9 @@ std::string freeze::IceBlock::thawNewData()
 		i++;
 	}
 
-	std::string chunked = frozenData.substr(1, i - 1); // remove indicators
+	std::string chunked = frozenData.substr(1, i - 2); // remove indicators
 
-	frozenData.erase(0, i + 1);
+	frozenData.erase(0, i);
 	
 	return chunked;
 }
