@@ -1,5 +1,5 @@
 # freeze
-☃️ Quick and dirty method of loading and saving the properties of arbitrarily complex class structures in a text file, provided loading occurs in a known order.  
+☃️ Quick and dirty method of concisely loading and saving the properties of arbitrarily complex class structures in a text file, provided loading occurs in a known order.  
 
 ## Usage 
 

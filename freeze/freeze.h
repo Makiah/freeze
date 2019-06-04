@@ -15,7 +15,6 @@ namespace freeze
 	constexpr char stringIndicator = '"';
 	constexpr char intIndicator = 'i';
 	constexpr char doubleIndicator = 'd';
-	constexpr char boolIndicator = 'd';
 
 	void escapeReservedChars(std::string& s, const std::vector<char>& reservedCharacters);
 	void unescapeReservedChars(std::string& s, const std::vector<char>& reservedCharacters);
