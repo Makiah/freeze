@@ -33,7 +33,7 @@ std::vector<std::vector<ClassA>> twod = i.melt<std::vector<std::vector<ClassA>>>
 
 ### Advanced
 
-See `main.cpp`.
+See `example.cpp`.
 
 ## Building
 

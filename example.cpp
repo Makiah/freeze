@@ -125,7 +125,7 @@ void checkIceBlock()
 	std::cout << "All good!" << std::endl;
 }
 
-int main()
+void runExample()
 {
 	createIceBlock();
 	checkIceBlock();
