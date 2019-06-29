@@ -57,6 +57,11 @@ bool freeze::IceBlock::empty()
 	return frozenData.empty();
 }
 
+std::string freeze::IceBlock::getFrozenData()
+{
+    return frozenData;
+}
+
 std::string freeze::IceBlock::thawNewData()
 {
 	bool inPrimitive = false;
